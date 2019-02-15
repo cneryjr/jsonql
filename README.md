@@ -68,7 +68,7 @@ Consider two collections
 Query:
 
 ```javascript
-  let rs = 	new JsonQL(persons)
+  let rs = new JsonQL(persons)
     .join(companies,[['id','personId']])
     .select(['name', 'name$1', 'age'])
 
@@ -88,7 +88,7 @@ Result:
 Query:
 
 ```javascript
-  let rs = 	new JsonQL(persons)
+  let rs = new JsonQL(persons)
     .join(companies,[['id','personId']])
     .equals("city", "Uberlandia")
     .greater("age", 3)
