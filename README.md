@@ -107,7 +107,7 @@ Result:
   ]
 ```  
 
-### 3. Left Join collections with filter
+### 3. Left Join collections
 Query:
 
 ```javascript
