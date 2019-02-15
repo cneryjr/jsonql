@@ -102,7 +102,8 @@ JsonQL.prototype.methods = {
         }
     },
     equals: function(val1, val2) {
-        var isEqual = false;
+        let isEqual = false;
+
         if (val1 && val1.constructor == Array) {
             if (val1.length == val2.length) {
                 for (var i=0; i < val1.length; i++) {
@@ -111,12 +112,18 @@ JsonQL.prototype.methods = {
                 }
                 isEqual = true;
             }
-        } else if (val1.constructor == Number) {
+        } else if (val1 && val1.constructor == Number) {
+            return (val1 == val2);
+        } else if (val1 == undefined || val1 === null) {
             return (val1 == val2);
         } else {
-            var v1, v2, r = (v1=val1.toString()).match(new RegExp("^" + (v2=val2.toString()) + "", this.ignoreCase));
+            let v1
+            let v2 
+            let r = (v1=val1.toString()).match(new RegExp("^" + (v2=val2.toString()) + "", this.ignoreCase));
+
             isEqual = r && (r.length > 0) && (v1.length == v2.length);
         }
+
         return isEqual;
     },
     greaterEquals: function(val1 /* record value */, val2 /* filter value */) {
@@ -282,8 +289,26 @@ JsonQL.prototype.methods = {
         	});
     	});
     	return nrs;
+    },
+    leftJoin: function(data, dataJoin, attrs) {
+    	var nrs = [];
+    	data.forEach(function(el, idx, arr) {
+    		dataJoin.forEach(function(elj, idxj, arrj){
+    			var match = true;
+    			for (var i=0; i < attrs.length; i++)
+            		match &= (el[attrs[i][0]] == elj[attrs[i][1]]);
+    			if (match) {
+    				for (var attrname in elj) {
+              let field = (el[attrname]) ? attrname + '$1' : attrname;
+    					el[field] = elj[attrname];
+            }
+    			}
+  				nrs.push(el);
+        });
+    	});
+    	return nrs;
     }
-};
+  };
 
 JsonQL.prototype.starts = function(attribute, value) {
     this.seqOperation.push({op: "starts", att: attribute, val: value});
@@ -345,6 +370,10 @@ JsonQL.prototype.join = function(collection /* Array */, attributes /* Array of 
     this.seqOperation.push({op: "join", atts: attributes, collection: collection});
     return this;
 };
+JsonQL.prototype.leftJoin = function(collection /* Array */, attributes /* Array of Arrays[2] of strings */) {
+    this.seqOperation.push({op: "leftJoin", atts: attributes, collection: collection});
+    return this;
+};
 JsonQL.prototype.orderby = function(attribute /* string */, func /* Function or string */, dir /* "asc" or "desc" */) {
 	var filter = {op: "orderby", att: attribute, func: null, asc: false};
 	var vdir = ["asc", "desc"];
@@ -400,11 +429,16 @@ JsonQL.prototype.select = function(arrFields) {
         } else if (this.methods[filter.op]) {
             for (var r=0; r < drs.length; r++) {
                 var field = filter.att;
-                var fk = field.split(".");
+                var fk = (field) ? field.split(".") : [];
                 if (fk.length == 2) {
                     if (this.methods[filter.op].call(this, drs[r][fk[0]][fk[1]], filter.val))
                         rs.push(drs[r]);
                     	//rs.push((arrFields)? filterField(drs[r], arrFields) : drs[r]);
+                } else if (fk.length == 0) {
+                    let rnew = Object.assign({}, drs[r])
+
+                    rnew[field] = undefined
+                    rs.push(rnew);
                 } else {
                     //return jlinq.util.equals(this.value[field], value, this.ignoreCase);
                     if (this.methods[filter.op].call(this, drs[r][field], filter.val))
@@ -483,8 +517,6 @@ JsonQL.sortFunction = function(field, flagReverse, userFnc){
 	            (elm > eln) ? +1 : 0) * [-1,1][+!!flagReverse];                  
 	};
 };
-
-
 var persons = [{
 	"id": "5",
 	"name": "Pedro",
@@ -499,7 +531,7 @@ var persons = [{
 	"favorites": {"movies": true, "nba": false}
 }, {
 	"id": "3",
-	"name": "Carla",
+	"name": "Cassia",
 	"occupation": "manager",
 	"age": 39,
 	"favorites": {"movies": false, "nba": false}
@@ -516,6 +548,5 @@ var persons = [{
 	"age": 30,
 	"favorites": {"movies": true, "nba": true}
 }];
-
 
 module.exports = JsonQL
