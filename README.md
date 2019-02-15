@@ -64,14 +64,12 @@ Consider two collections
   }]
 ```
 
+### 1. Join collections
 Query:
 
 ```javascript
   let rs = 	new JsonQL(persons)
     .join(companies,[['id','personId']])
-    // .equals("city", "Uberlandia")
-    // .greater("age", 3)
-    // .orderby("name")
     .select(['name', 'name$1', 'age'])
 
  console.log(rs)
@@ -84,5 +82,27 @@ Result:
     { name: 'David', 'name$1': 'Gabarito', age: 5 },
     { name: 'Cassia', 'name$1': 'Martins', age: 39 },
     { name: 'Daniel', 'name$1': 'Yandeh', age: 30 } 
+  ]
+```  
+### 2. Join collections with filter
+Query:
+
+```javascript
+  let rs = 	new JsonQL(persons)
+    .join(companies,[['id','personId']])
+    .equals("city", "Uberlandia")
+    .greater("age", 3)
+    .orderby("name")
+    .select(['name', 'name$1', 'age'])
+
+ console.log(rs)
+```
+
+Result:
+```javascript
+  [ 
+    { name: 'Cassia', 'name$1': 'Martins', age: 39 },
+    { name: 'David', 'name$1': 'Gabarito', age: 5 },
+    { name: 'Pedro', 'name$1': 'Gabarito', age: 8 }
   ]
 ```  
