@@ -23,7 +23,7 @@ Consider two collections
     "favorites": {"movies": true, "nba": false}
   }, {
     "id": "3",
-    "name": "Cassia",
+    "name": "Carla",
     "occupation": "manager",
     "age": 39,
     "favorites": {"movies": false, "nba": false}
@@ -55,7 +55,7 @@ Consider two collections
     id: 3,
     personId: "3",
     city: "Uberlandia",
-    name: "Martins"
+    name: "Unitri"
   }, {
     id: 4,
     personId: "2",
@@ -80,7 +80,7 @@ Result:
   [ 
     { name: 'Pedro', 'name$1': 'Gabarito', age: 8 },
     { name: 'David', 'name$1': 'Gabarito', age: 5 },
-    { name: 'Cassia', 'name$1': 'Martins', age: 39 },
+    { name: 'Carla', 'name$1': 'Unitri', age: 39 },
     { name: 'Daniel', 'name$1': 'Yandeh', age: 30 } 
   ]
 ```  
@@ -101,7 +101,7 @@ Query:
 Result:
 ```javascript
   [ 
-    { name: 'Cassia', 'name$1': 'Martins', age: 39 },
+    { name: 'Carla', 'name$1': 'Unitri', age: 39 },
     { name: 'David', 'name$1': 'Gabarito', age: 5 },
     { name: 'Pedro', 'name$1': 'Gabarito', age: 8 }
   ]
