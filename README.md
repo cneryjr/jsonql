@@ -106,3 +106,26 @@ Result:
     { name: 'Pedro', 'name$1': 'Gabarito', age: 8 }
   ]
 ```  
+
+### 3. Left Join collections with filter
+Query:
+
+```javascript
+rs = 	new JsonQL(persons)
+  .leftJoin(companies,[['id','personId']])
+  .orderby("name")
+  .select(['name', 'name$1', 'age', 'city'])
+
+ console.log(rs)
+ ``` 
+ 
+ Result:
+```javascript
+  [ 
+    { name: 'Carla', 'name$1': 'Unitri', age: 39, city: 'Uberlandia' },
+    { name: 'Daniel', 'name$1': 'Yandeh', age: 30, city: 'Sao Paulo' },
+    { name: 'David', 'name$1': 'Gabarito', age: 5, city: 'Uberlandia' },
+    { name: 'Nery', 'name$1': undefined, age: 43, city: undefined },
+    { name: 'Pedro', 'name$1': 'Gabarito', age: 8, city: 'Uberlandia' } 
+  ]
+```  
