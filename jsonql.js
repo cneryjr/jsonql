@@ -1,5 +1,3 @@
-var Array, RegExp, Number, JsonQL, JSON, console;
-
 //..............................................................................
 if ( !Array.prototype.shrink ) {
     Array.prototype.shrink = function shrink(/* [scope], func */){
@@ -29,110 +27,6 @@ if ( !Array.prototype.shrink ) {
 
     //[2,3,4].shrink(function(old,current,idx,arr){return old+current;},1);
 }
-
-//..............................................................................
-if (!Array.prototype.indexOf) {
-    Array.prototype.indexOf = function (searchElement /*, fromIndex */ ) {
-        "use strict";
-        if (this == null) {
-            throw new TypeError();
-        }
-        var t = Object(this);
-        var len = t.length >>> 0;
-        if (len === 0) {
-            return -1;
-        }
-        var n = 0;
-        if (arguments.length > 0) {
-            n = Number(arguments[1]);
-            if (n != n) { // shortcut for verifying if it's NaN
-                n = 0;
-            } else if (n != 0 && n != Infinity && n != -Infinity) {
-                n = (n > 0 || -1) * Math.floor(Math.abs(n));
-            }
-        }
-        if (n >= len) {
-            return -1;
-        }
-        var k = n >= 0 ? n : Math.max(len - Math.abs(n), 0);
-        for (; k < len; k++) {
-            if (k in t && t[k] === searchElement) {
-                return k;
-            }
-        }
-        return -1;
-    };
-}
-
-//..............................................................................
-//Production steps of ECMA-262, Edition 5, 15.4.4.18
-//Reference: http://es5.github.com/#x15.4.4.18
-
-if ( !Array.prototype.forEach ) {
-	Array.prototype.forEach = function( callback, thisArg ) {
-		 var T, k;
-		
-		 if ( this == null ) {
-			 throw new TypeError( "this is null or not defined" );
-		 }
-		
-		 // 1. Let O be the result of calling ToObject passing the |this| value as the argument.
-		 var O = Object(this);
-		
-		 // 2. Let lenValue be the result of calling the Get internal method of O with the argument "length".
-		 // 3. Let len be ToUint32(lenValue).
-		 var len = O.length >>> 0; // Hack to convert O.length to a UInt32
-		
-		 // 4. If IsCallable(callback) is false, throw a TypeError exception.
-		 // See: http://es5.github.com/#x9.11
-		 if ( {}.toString.call(callback) != "[object Function]" ) {
-			 throw new TypeError( callback + " is not a function" );
-		 }
-		
-		 // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.
-		 if ( thisArg ) {
-			 T = thisArg;
-		 }
-		 // 6. Let k be 0
-		 k = 0;
-		
-		 // 7. Repeat, while k < len
-		 while( k < len ) {
-			 var kValue;
-			 // a. Let Pk be ToString(k).
-			 //   This is implicit for LHS operands of the in operator
-			 // b. Let kPresent be the result of calling the HasProperty internal method of O with argument Pk.
-			 //   This step can be combined with c
-			 // c. If kPresent is true, then
-			 if ( k in O ) {
-				 // i. Let kValue be the result of calling the Get internal method of O with argument Pk.
-				 kValue = O[ k ];
-				 // ii. Call the Call internal method of callback with T as the this value and
-				 // argument list containing kValue, k, and O.
-				 callback.call( T, kValue, k, O );
-			}
-			// d. Increase k by 1.
-			k++;
-		 }
-		 // 8. return undefined
-	};
-}
-
-//..............................................................................
-/*if (!Object.prototype.clone) {
-	Object.prototype.clone = function() {
-		var newObj = (this instanceof Array) ? [] : {};
-		for (i in this) {
-			if (i == 'clone')
-				continue;
-			if (this[i] && typeof this[i] == "object") {
-				newObj[i] = this[i].clone();
-			} else
-				newObj[i] = this[i];
-		}
-		return newObj;
-	};
-}*/
 
 // ..............................................................................
 function JsonQL(collection, ignoreCase) {
@@ -373,14 +267,16 @@ JsonQL.prototype.methods = {
     },
     join: function(data, dataJoin, attrs) {
     	var nrs = [];
-    	data.forEach(function(el, idx, arr){
+    	data.forEach(function(el, idx, arr) {
     		dataJoin.forEach(function(elj, idxj, arrj){
     			var match = true;
     			for (var i=0; i < attrs.length; i++)
             		match &= (el[attrs[i][0]] == elj[attrs[i][1]]);
     			if (match) {
-    				for (var attrname in elj) 
-    					el[attrname] = elj[attrname];
+    				for (var attrname in elj) {
+              let field = (el[attrname]) ? attrname + '$1' : attrname;
+    					el[field] = elj[attrname];
+            }
     				nrs.push(el);
     			}
         	});
@@ -421,6 +317,10 @@ JsonQL.prototype.lessEquals = function(attribute, value) {
     this.seqOperation.push({op: "lessEquals", att: attribute, val: value});
     return this;
 };
+// JsonQL.prototype.filterby = function(attribute, value) {
+//     this.seqOperation.push({op: "filterby", att: attribute, val: value});
+//     return this;
+// };
 //group by
 JsonQL.prototype.groupby = function(/* arguments - campos a serem usados na agregação */) {
     //print('arguments: ' + JSON.stringify( arguments ));
@@ -474,8 +374,16 @@ JsonQL.prototype.count = function (attribute) {
 JsonQL.prototype.select = function(arrFields) {
 	function filterField(tuple, arrFields) {
 		var obj = new Object();
-		for (i=0; i < arrFields.length; i++)
-			obj[arrFields[i]] = tuple[arrFields[i]];
+		for (i=0; i < arrFields.length; i++) {
+      let field = arrFields[i]
+
+      if (field.constructor.name === 'Object') {
+        let [name, fnc] = Object.entries(field)[0]
+        obj[name] = fnc(tuple)
+      } else {
+  			obj[arrFields[i]] = tuple[arrFields[i]];
+      }
+    }
 		return obj;
 	}
 	
@@ -575,6 +483,8 @@ JsonQL.sortFunction = function(field, flagReverse, userFnc){
 	            (elm > eln) ? +1 : 0) * [-1,1][+!!flagReverse];                  
 	};
 };
+
+
 var persons = [{
 	"id": "5",
 	"name": "Pedro",
@@ -589,7 +499,7 @@ var persons = [{
 	"favorites": {"movies": true, "nba": false}
 }, {
 	"id": "3",
-	"name": "Cassia",
+	"name": "Carla",
 	"occupation": "manager",
 	"age": 39,
 	"favorites": {"movies": false, "nba": false}
@@ -608,24 +518,4 @@ var persons = [{
 }];
 
 
-//Sort by name using the user function to make sorting sensitive
-//persons.sort(JsonQL.sort('name', false, function(elem){return elem.toUpperCase()}));
-
-//Sort by age old to young
-//persons.sort(JsonQL.sort('id', true, parseInt));
-
-/*
-	new JsonQL(persons)
-	.greater("age", 8)
-	.orderBy("id", parseInt, "asc")
-	.select()
-	//.sort( JsonQL.sortFnc("id", parseInt, true) )
-	
-	var jsonql = new JsonQL(persons);
-	jsonql.join([{sal: 100, occupation: "student"}],["occupation","occupation"]).groupby("occupation").sum("sal").select();
-	
- */
-
-/* export("JsonQL"); */
-
-
+module.exports = JsonQL
