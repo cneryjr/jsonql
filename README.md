@@ -64,7 +64,7 @@ Consider two collections
   }]
 ```
 
-### 1. Join collections
+#### 1. Join collections
 Query:
 
 ```javascript
@@ -84,7 +84,7 @@ Result:
     { name: 'Daniel', 'name$1': 'Yandeh', age: 30 } 
   ]
 ```  
-### 2. Join collections with filter
+#### 2. Join collections with filter
 Query:
 
 ```javascript
@@ -107,7 +107,7 @@ Result:
   ]
 ```  
 
-### 3. Left Join collections
+#### 3. Left Join collections
 Query:
 
 ```javascript
