@@ -253,24 +253,17 @@ JsonQL.prototype.methods = {
         return value;  
     },
     max: function(previousValue, currentValue, index, array){  
-        var value = JSON.parse(JSON.stringify(previousValue));
-        //value[this.att] = Math.max(value[this.att], currentValue[this.att]);
-        value = (value[this.att] < currentValue[this.att])? currentValue : value;
-        return value;  
+        // var value = JSON.parse(JSON.stringify(previousValue));
+        // value = (value[this.att] < currentValue[this.att])? currentValue : value;
+        // return value;  
+        return (previousValue[this.att] < currentValue[this.att])? currentValue : previousValue;
     },
-    count: function(rows, filter /* {op: "count", att: attribute, strcount: strcount} */) {
-        var count = 0;
-        if (filter.strcount == "count") {
-            rows.shrink(filter, function(previousValue, currentValue, index, array){
-                count++;
-            }, 0);
-        } else {
-            rows.shrink(filter, function(previousValue, currentValue, index, array){
-                count += (currentValue[this.att]) ? 1 : 0;
-            }, 0);
-        }
-        var fv = {};v[filter.strcount] = count;
-        return [fv];  
+    count: function(previousValue, currentValue, index, array) {
+        return (this.att) 
+          ? (currentValue[this.att]) 
+            ? previousValue + 1 
+            : previousValue
+          : previousValue + 1 
     },
     join: function(data, dataJoin, attrs) {
     	var nrs = [];
@@ -362,8 +355,13 @@ JsonQL.prototype.average = function (field) {
     return this;
 };
 JsonQL.prototype.max = function (field) {
-    var iv = {}; iv[field] = "-Infinity";
+    var iv = {}; 
+    iv[field] = Number.NEGATIVE_INFINITY;
     this.seqOperation.push({op: "max", att: field, initialValue: iv});
+    return this;
+};
+JsonQL.prototype.count = function (field) {
+    this.seqOperation.push({op: "count", att: field, initialValue: 0});
     return this;
 };
 JsonQL.prototype.join = function(collection /* Array */, attributes /* Array of Arrays[2] of strings */) {
@@ -392,14 +390,6 @@ JsonQL.prototype.orderby = function(attribute /* string */, func /* Function or 
     return this;
 };
 
-JsonQL.prototype.count = function (attribute) {
-    var strcount = 'count' + ((attribute) ? '_'+attribute : '');
-    //var iv = {}; iv[strcount] = 0;
-    print('strcount: ' + strcount);
-    this.seqOperation.push({op: "count", att: attribute, strcount: strcount});
-    return this;
-};
-
 JsonQL.prototype.select = function(arrFields) {
 	function filterField(tuple, arrFields) {
 		var obj = new Object();
@@ -410,7 +400,7 @@ JsonQL.prototype.select = function(arrFields) {
         let [name, fnc] = Object.entries(field)[0]
         obj[name] = fnc(tuple)
       } else {
-  			obj[arrFields[i]] = tuple[arrFields[i]];
+  			obj[field] = tuple[field];
       }
     }
 		return obj;
@@ -421,10 +411,10 @@ JsonQL.prototype.select = function(arrFields) {
         rs = [];
         var filter = this.seqOperation[i];
         if (filter.op == "groupby") {
-            rs = this.methods[filter.op].apply(this, [drs, filter.att]);
+          rs = this.methods[filter.op].apply(this, [drs, filter.att]);
         } else if (filter.op == "join") {
-            rs = this.methods[filter.op].call(this, drs, filter.collection, filter.atts);
-        } else if (filter.op == "max") {
+          rs = this.methods[filter.op].call(this, drs, filter.collection, filter.atts);
+        } else if (filter.op == "max" || filter.op == "count") {
         	rs = drs.shrink(filter, this.methods[filter.op], filter.initialValue);
         } else if (this.methods[filter.op]) {
             for (var r=0; r < drs.length; r++) {
@@ -452,12 +442,19 @@ JsonQL.prototype.select = function(arrFields) {
         }
         drs = rs;
     }
-    
+
     if (arrFields && arrFields.constructor.toString().indexOf("Array") > 0) {
-    	rs = [];
-    	for (var t=0; t < drs.length; t++) {
-    	    rs.push(filterField(drs[t], arrFields));
-    	}
+      if (drs.constructor.name === 'Object') {
+        rs = {}
+        for (let idx=0; idx < arrFields.length; idx++) {
+          rs[arrFields[idx]] = drs[arrFields[idx]]
+        }
+      } else {
+      	rs = [];
+        for (var t=0; t < drs.length; t++) {
+            rs.push(filterField(drs[t], arrFields));
+        }
+      }
     	drs = rs;
     } else if (typeof(arrFields) == "function") {
     	var retFunc = arrFields;
@@ -470,6 +467,7 @@ JsonQL.prototype.select = function(arrFields) {
     
     this.seqOperation = [];
     this.groupByFuncs = [];
+
     return drs;
 };
 
@@ -548,5 +546,24 @@ var persons = [{
 	"age": 30,
 	"favorites": {"movies": true, "nba": true}
 }];
+
+
+//Sort by name using the user function to make sorting sensitive
+//persons.sort(JsonQL.sort('name', false, function(elem){return elem.toUpperCase()}));
+
+//Sort by age old to young
+//persons.sort(JsonQL.sort('id', true, parseInt));
+
+/*
+	new JsonQL(persons)
+	.greater("age", 8)
+	.orderBy("id", parseInt, "asc")
+	.select()
+	//.sort( JsonQL.sortFnc("id", parseInt, true) )
+	
+	var jsonql = new JsonQL(persons);
+	jsonql.join([{sal: 100, occupation: "student"}],["occupation","occupation"]).groupby("occupation").sum("sal").select();
+	
+ */
 
 module.exports = JsonQL
