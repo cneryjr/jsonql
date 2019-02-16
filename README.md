@@ -129,3 +129,40 @@ rs = 	new JsonQL(persons)
     { name: 'Pedro', 'name$1': 'Gabarito', age: 8, city: 'Uberlandia' } 
   ]
 ```  
+
+#### 4. Select object with MAX value in a field
+Query:
+
+```javascript
+  rs = 	new JsonQL(persons).max('age').select()
+
+  console.log(rs)
+ ``` 
+ 
+ Result:
+```javascript
+  { 
+    id: '4',
+    name: 'Nery',
+    occupation: 'director',
+    age: 43,
+    favorites: { movies: true, nba: true } 
+  }
+```  
+
+#### 5. Select some fields of object with MAX value in a field, 
+Query:
+
+```javascript
+  rs = 	new JsonQL(persons).max('age').select(['name', 'age'])
+
+  console.log(rs)
+ ``` 
+ 
+ Result:
+```javascript
+  { 
+    name: 'Nery', 
+    age: 43 
+  }
+```  
