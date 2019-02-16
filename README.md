@@ -134,9 +134,7 @@ rs = 	new JsonQL(persons)
 Query:
 
 ```javascript
-  rs = 	new JsonQL(persons).max('age').select()
-
-  console.log(rs)
+  console.log( new JsonQL(persons).max('age').select() )
  ``` 
  
  Result:
@@ -154,9 +152,7 @@ Query:
 Query:
 
 ```javascript
-  rs = 	new JsonQL(persons).max('age').select(['name', 'age'])
-
-  console.log(rs)
+  console.log( new JsonQL(persons).max('age').select(['name', 'age']) )
  ``` 
  
  Result:
